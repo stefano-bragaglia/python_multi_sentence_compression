@@ -149,10 +149,11 @@ if __name__ == '__main__':
         g = advanced_weight(g, t)
 
     with Timer('Compressing'):
-        summaries = search(g, min_len=6)
-        summary = min(summaries, key=lambda x: x[1])
+        summaries = search(g, min_len=8)
 
     print(json.dumps(g, indent=4), end='\n\n')
-    print(' '.join(w.split(':')[0] for w in summary[0]), end='\n\n')
+    if summaries:
+        summary = min(summaries, key=lambda x: x[1])
+        print(' '.join(w.split(':')[0] for w in summary[0]), end='\n\n')
 
     print('Done.')
