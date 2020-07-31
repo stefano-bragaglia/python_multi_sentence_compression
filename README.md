@@ -9,9 +9,7 @@ Compressing a cluster of related sentences into a single sentence that retains t
 This project implements the method suggested in ["Multi-Sentence Compressing: Finding Shortest Paths in Word Graphs"](http://www.aclweb.org/anthology/C10-1037) (**Katja Filippova.** Google Inc. _In Proc of 23rd Intl Conf COLING, 2010._) which is based upon shortest paths in word graphs.
 
 Specifically, we use:
-* [OpenNLP](https://opennlp.apache.org) for basic sentence detection, tokenisation and POD tagging
-* [Neo4j](https://neo4j.com) for graph generation and traversal
-* Wikipedia's list of [most common words in English](https://en.wikipedia.org/wiki/Most_common_words_in_English).
+* [Spacy](https://spacy.io) for basic sentence detection, tokenisation and POD tagging
 
 The procedure consists in:
 * generating a `word graph`
@@ -82,11 +80,11 @@ By visiting the _words_ in the **minimal cost path** (if any), the desired compr
 Results
 ----
 
-The project is organised as a [Gradle Application](https://docs.gradle.org/current/userguide/application_plugin.html), 
+The project is organised as a [PyBuilder Project](https://pybuilder.io), 
 therefore it is sufficient to issue the following command on the terminal in the root folder of the project 
-(provided that [Gradle]() is installed locally):
+(provided that [PyBuilder]() is installed locally):
 
-    gradle clean run
+    pyb execute
 
 The example introduced above, for instance, produces the following output:
 
@@ -94,7 +92,7 @@ The example introduced above, for instance, produces the following output:
 
 which includes the following summary: 
 
-    Hillary Clinton wanted to visit China last week.
+    Hillary Clinton visited China last week.
 
 The algorithm has been successfully applied to English and Spanish by using an _ad-hoc_ **stop-word list** of 600 term ca.
 The experimental results are discussed in the [original paper](http://www.aclweb.org/anthology/C10-1037).
