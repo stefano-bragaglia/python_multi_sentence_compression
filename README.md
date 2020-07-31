@@ -1,5 +1,3 @@
-# python_multi_sentence_compression
-
 Multi-Sentence Compression
 ====
 Multi-Sentece Compression, in Python!
