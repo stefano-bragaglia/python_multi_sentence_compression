@@ -1,126 +1,158 @@
+import datetime
+import itertools
 import json
-from collections import Counter
+import re
+import time
 from typing import Dict
 from typing import List
+from typing import Tuple
+from typing import Union
 
 import spacy
-from neo4j import GraphDatabase
-from neo4j import Transaction
-from spacy.symbols import ADJ
-from spacy.symbols import ADP
-from spacy.symbols import NOUN
-from spacy.symbols import PROPN
-from wikipediaapi import Wikipedia
 
-from utils import Timer
+Graph = Dict[str, Dict[str, Union[int, float]]]
+Table = Dict[str, Tuple[int, int]]
+
+START, END = '<START>', '<END>'
 
 
-def hello_world(out):
-    out.write("Hello world of Python\n")
+def word_graph(content: str) -> Tuple[Graph, Table]:
+    def overlap(pr: str, cu: str, su: str) -> float:
+        return sum(0.5 for s, e in [(pr, cu), (cu, su)]
+                   if any(t.startswith(s) and any(h.startswith(e) for h in hs) for t, hs in result[0].items()))
 
+    def occurs(el: str) -> int:
+        return 0 if el not in result[1] else len(result[1][el])
 
-def get_chunks(content: str, resolve: bool = False, filter: bool = False) -> Dict[str, int]:
-    if not content:
-        return {}
-
-    result = {}
-    for chunk in nlp(content).noun_chunks:
-        name = ' '.join(w.lemma_.lower() for w in chunk if w.pos in [ADJ, ADP, NOUN, PROPN])
-        if name and all(c.isalnum() or c == ' ' for c in name):
-            result[name] = result.get(name, 0) + 1
-    if resolve:
-        terms, acronyms = {}, set()
-        for name, occur in result.items():
-            acronym = ''.join(w[0] for w in name.split())
-            terms[name] = occur
-            if len(acronym) > 1 and acronym in result:
-                terms[name] += result.get(acronym, 0)
-                acronyms.add(acronym)
-        for acronym in acronyms:
-            terms.pop(acronym)
-        result = terms
-
-    if filter:
-        threshold = round(5 * max(result.values()) / 100)
-        result = {k: v for k, v in sorted(result.items(), key=lambda x: (-x[1], x[0])) if v >= threshold}
+    ident = itertools.count()
+    result = ({}, {})
+    doc = nlp(re.sub(r'\s+', ' ', content).strip())
+    for idx, sent in enumerate(doc.sents):
+        pred = START
+        tokens = [f"{str(t).lower()}:{t.tag_}:{'*' if t.is_stop else '_'}" for t in sent if not t.is_punct]
+        for pos, curr in enumerate(tokens):
+            succ = tokens[pos + 1] if pos < len(tokens) - 1 else END
+            candidates = [(t, overlap(pred, curr, succ), occurs(t)) for t in result[0] if t.startswith(curr)]
+            if not candidates:
+                candidate = f"{curr}:{next(ident)}"
+            else:
+                candidate, score, num = max(candidates, key=lambda x: (x[1], x[2], x[0]))
+                if ':*:' in curr and score == 0:
+                    candidate = f"{curr}:{next(ident)}"
+            result[1].setdefault(candidate, set()).add((idx, pos))
+            heads = result[0].setdefault(pred, {})
+            heads[candidate] = heads.get(candidate, 0) + 1
+            pred = candidate
+        heads = result[0].setdefault(pred, {})
+        heads[END] = heads.get(END, 0) + 1
 
     return result
 
 
-def get_count(tx: Transaction, term: str, exact: bool = False) -> Dict[str, int]:
-    result = tx.run(f"MATCH (n) "
-                    f"WHERE toLower(n.desc) {'=' if exact else 'CONTAINS'} {json.dumps(term)} "
-                    f"WITH labels(n) AS labs "
-                    f"UNWIND labs AS lab "
-                    f"RETURN DISTINCT lab, count(lab) "
-                    f"ORDER BY count(lab) DESC;")
-    if not result:
-        return {}
+def naive_weight(graph: Graph) -> Graph:
+    result = {}
+    for tail, heads in graph.items():
+        total = sum(heads.values())
+        result[tail] = {}
+        for head, occur in heads.items():
+            result[tail][head] = total / occur
 
-    return {r['lab']: r['count(lab)'] for r in result}
+    return result
 
 
-def get_desc(tx: Transaction, label: str, term: str) -> List[str]:
-    result = tx.run(f"MATCH (n:{label}) "
-                    f"WHERE toLower(n.desc) CONTAINS {json.dumps(term)} "
-                    f"RETURN n.desc "
-                    f"ORDER BY n.desc "
-                    f"LIMIT 10;")
-    if not result:
-        return []
+def advanced_weight(graph: Graph, lookup: Table) -> Graph:
+    result = {}
+    for tail, heads in graph.items():
+        result[tail] = {}
+        for head, occur in heads.items():
+            tail_refs = lookup.get(tail, set())
+            head_refs = lookup.get(head, set())
+            strength = 0
+            for tail_ref in tail_refs:
+                for head_ref in head_refs:
+                    if tail_ref[0] == head_ref[0] and tail_ref[1] < head_ref[1]:
+                        strength += 1 / (tail_ref[1] - head_ref[1])
+            if strength:
+                strength = (len(tail_refs) + len(head_refs)) / strength
+            salience = 0 if strength == 0 else strength / (len(tail_refs) * len(head_refs))
+            result[tail][head] = 1 - salience
 
-    return [r['n.desc'] for r in result]
+    return result
 
 
-# TITLE = 'Acute Severe Asthma'
-TITLE = 'Chronic kidney disease'
+def search(graph: Graph, num_result: int = 5, min_len: int = 8) -> List[Tuple[List[str], float]]:
+    result, fringe = [], [([], 0)]
+    while fringe:
+        best = min(fringe, key=lambda x: x[1])
+        fringe.remove(best)
+        tail = best[0][-1] if best[0] else START
+        for head, cost in graph[tail].items():
+            if head in best[0]:
+                continue
+
+            if head != END:
+                path = ([*best[0], head], best[1] + cost)
+                if path not in fringe:
+                    fringe.append(path)
+
+            if len(best[0]) < min_len or not any(':VB' in n for n in best[0]):
+                continue
+
+            result.append((best[0], best[1] / len(best[0])))
+            if len(result) >= num_result:
+                return result
+
+    return result
+
+
+class Timer(object):
+    def __init__(self, name: str = "(block)", verbose: bool = True):
+        self.name = name
+        self.verbose = verbose
+
+    def __call__(self) -> float:
+        return time.perf_counter() - self.start_time
+
+    def __str__(self) -> str:
+        return str(datetime.timedelta(seconds=self()))
+
+    def __enter__(self) -> 'Timer':
+        self.start_time = time.perf_counter()
+        if self.verbose:
+            print(f'{self.name}...')
+
+        return self
+
+    def __exit__(self, ty, val, tb):
+        if self.verbose:
+            print(f'{self.name}: completed in {self}\n')
+
+        return False  # re-raise any exceptions
+
+
+SENTENCES = """
+The wife of a former U.S. president Bill Clinton, Hillary Clinton, visited China last Monday.
+Hillary Clinton wanted to visit China last month but postponed her plans till Monday last week.
+Hillary Clinton paid a visit to the People Republic of China on Monday.
+Last week the Secretary State Ms. Clinton visited Chinese officials.
+"""
 
 if __name__ == '__main__':
-    driver = GraphDatabase.driver("neo4j://localhost:7687", auth=("neo4j", "password"))
-    nlp = spacy.load("en_core_web_sm")
-    with Timer('Fetching'):
-        print()
-        wiki = Wikipedia('en')
-        page = wiki.page(TITLE)
-        print(page.title)
-        print(page.fullurl)
-        print('-' * max(len(page.title), len(page.fullurl)))
-        print()
-        if page.exists():
-            chunks = Counter(get_chunks(page.text, True, True))
-            with driver.session() as session:
-                for term, occur in chunks.items():
-                    print(f"{term.upper()} ({occur:,} occur/s)")
-                    exact = session.read_transaction(get_count, term, True)
-                    approx = session.read_transaction(get_count, term, False)
-                    if not exact and not approx:
-                        print("  No matches")
-                    else:
-                        print(f"  ## | {'Exact matches:':32} | {'Partial matches':32} | Descriptions ")
-                        ex = list(exact.keys()) + ['' for _ in range(max(0, len(approx) - len(exact)))]
-                        ap = list(approx.keys()) + ['' for _ in range(max(0, len(exact) - len(approx)))]
-                        for i, (ke, ka) in enumerate(zip(ex, ap)):
-                            if ka:
-                                desc = session.read_transaction(get_desc, ka, term)
-                                if approx[ka] > 10:
-                                    desc.append('...')
-                                if ke:
-                                    print(f"  {i + 1:>2}"
-                                          f" | ({exact[ke]:>4}) {ke:25}"
-                                          f" | ({approx[ka]:>4}) {ka:25}"
-                                          f" | {', '.join(desc)}")
-                                else:
-                                    print(f"  {i + 1:>2}"
-                                          f" | {'':>6} {'':25}"
-                                          f" | ({approx[ka]:>4}) {ka:25}"
-                                          f" | {', '.join(desc)}")
-                            else:
-                                print(f"  {i + 1:>2}"
-                                      f" | ({exact[ke]:>4}) {ke:25}"
-                                      f" | {'':>6} {'':25}"
-                                      f" | {''}")
-                    print()
-        print()
+    with Timer('Load NLP'):
+        nlp = spacy.load("en_core_web_sm")
 
-    print()
+    with Timer('Building'):
+        g, t = word_graph(SENTENCES)
+
+    with Timer('Weighting'):
+        # graph = naive_weight(g)
+        g = advanced_weight(g, t)
+
+    with Timer('Compressing'):
+        summaries = search(g, min_len=6)
+        summary = min(summaries, key=lambda x: x[1])
+
+    print(json.dumps(g, indent=4), end='\n\n')
+    print(' '.join(w.split(':')[0] for w in summary[0]), end='\n\n')
+
     print('Done.')
