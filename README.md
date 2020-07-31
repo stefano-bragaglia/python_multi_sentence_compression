@@ -24,10 +24,12 @@ A `word graph` (or `adjacency text graph`) is a directed graph where:
 * _adjacent words_ are connected by **edges** (type: _FOLLOWS_)
 * _frequencies_ of words and adjacencies are saved on both **nodes** and **edges**.
 
-The **lower case text** and **POS tag** of each _word_ act as key, so that words with the same grammatical usage are unique in the graph.   
-The only exception to this rule is for [stop-words](https://en.wikipedia.org/wiki/Most_common_words_in_English) which are always duplicated (if not involved in a _sintagmatic association_ with a relevant word) to keep their _frequencies_ (and importance in the graph) low.
+The **lower case text**, **POS tag** and the **stop_word** flag of each _word_ act as key, so that words with the same grammatical usage are unique in the graph.
+If more words have a similar key, the key with most similar context (words before and after it) or higher frequency is considered a mapping.
+The only exception to this rule is for [stop-words](https://en.wikipedia.org/wiki/Most_common_words_in_English) which are duplicated if the context is empty to keep their _frequencies_ (and importance in the graph) low.
 
-Our data model also includes a **node** to represent each _sentence_ (with _id_) and as many _CONTAINS_ **edges** as _words_ in each sentence (with their relative _pos_). The chain of _words_ of each sentence is also preceded by a _START_ **node** and followed by an _END_ **node**.
+The identifier of the originating sentence and the offset position of each mapped word are maintained in a separate **lookup table**.
+The chain of _words_ of each sentence is also preceded by a _START_ **node** and followed by an _END_ **node**.
 
 Given the following cluster of related sentences:
 
