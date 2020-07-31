@@ -138,22 +138,23 @@ Last week the Secretary State Ms. Clinton visited Chinese officials.
 """
 
 if __name__ == '__main__':
-    with Timer('Load NLP'):
-        nlp = spacy.load("en_core_web_sm")
+    with Timer('Total'):
+        with Timer('Load NLP'):
+            nlp = spacy.load("en_core_web_sm")
 
-    with Timer('Building'):
-        g, t = word_graph(SENTENCES)
+        with Timer('Building'):
+            g, t = word_graph(SENTENCES)
 
-    with Timer('Weighting'):
-        # graph = naive_weight(g)
-        g = advanced_weight(g, t)
+        with Timer('Weighting'):
+            # graph = naive_weight(g)
+            g = advanced_weight(g, t)
 
-    with Timer('Compressing'):
-        summaries = search(g, min_len=8)
+        with Timer('Compressing'):
+            summaries = search(g, min_len=6)
 
-    print(json.dumps(g, indent=4), end='\n\n')
-    if summaries:
-        summary = min(summaries, key=lambda x: x[1])
-        print(' '.join(w.split(':')[0] for w in summary[0]), end='\n\n')
+        # print(json.dumps(g, indent=4), end='\n\n')
+        if summaries:
+            summary = min(summaries, key=lambda x: x[1])
+            print(' '.join(w.split(':')[0] for w in summary[0]), end='\n\n')
 
     print('Done.')
