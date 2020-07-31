@@ -212,6 +212,10 @@ therefore it is sufficient to issue the following command on the terminal in the
 (provided that [PyBuilder]() is installed locally):
 
     pyb execute
+    
+Alternatively, just try:
+
+    python3 /src/main/script/main.py
 
 The example introduced above, for instance, produces the following output:
 
