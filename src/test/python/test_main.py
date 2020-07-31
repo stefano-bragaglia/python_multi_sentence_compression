@@ -1,5 +1,7 @@
 from unittest import TestCase
 
+import spacy
+
 from main import advanced_weight
 from main import naive_weight
 from main import search
@@ -11,6 +13,8 @@ Hillary Clinton wanted to visit China last month but postponed her plans till Mo
 Hillary Clinton paid a visit to the People Republic of China on Monday.
 Last week the Secretary State Ms. Clinton visited Chinese officials.
 """
+
+nlp = spacy.load("en_core_web_sm")
 
 
 # noinspection PyMethodMayBeStatic
