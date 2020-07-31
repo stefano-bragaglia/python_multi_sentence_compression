@@ -36,7 +36,7 @@ def set_properties(project):
     project.set_property("unittest_module_glob", "test_*")
 
     # project.build_depends_on("assertpy")
-    project.build_depends_on("mockito")
+    # project.build_depends_on("mockito")
 
     # project.depends_on("coloredlogs")
     # project.depends_on("verboselogs")
