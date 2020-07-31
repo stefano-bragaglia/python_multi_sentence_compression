@@ -1,2 +1,2 @@
-# python_muli_sentence_compression
+# python_multi_sentence_compression
 Multi Sentence Compression in Python
