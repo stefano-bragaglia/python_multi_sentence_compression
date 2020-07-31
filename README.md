@@ -40,7 +40,132 @@ Given the following cluster of related sentences:
 
 the resulting `word graph` is presented below.
 
-![Word graph for the example cluster](/images/word-graph.png)
+   {
+        "<START>": {
+            "the:DT:*:0": 1,
+            "hillary:NNP:_:9": 2,
+            "last:JJ:*:12": 1
+        },
+        "the:DT:*:0": {
+            "wife:NN:_:1": 1,
+            "people:NNP:_:27": 1,
+            "secretary:NNP:_:30": 1
+        },
+        "wife:NN:_:1": {
+            "of:IN:*:2": 1
+        },
+        "of:IN:*:2": {
+            "a:DT:*:3": 1,
+            "china:NNP:_:11": 1
+        },
+        "a:DT:*:3": {
+            "former:JJ:*:4": 1,
+            "visit:NN:_:25": 1
+        },
+        "former:JJ:*:4": {
+            "u.s.:NNP:_:5": 1
+        },
+        "u.s.:NNP:_:5": {
+            "president:NN:_:6": 1
+        },
+        "president:NN:_:6": {
+            "bill:NNP:_:7": 1
+        },
+        "bill:NNP:_:7": {
+            "clinton:NNP:_:8": 1
+        },
+        "clinton:NNP:_:8": {
+            "hillary:NNP:_:9": 1,
+            "visited:VBD:_:10": 2,
+            "wanted:VBD:_:14": 1,
+            "paid:VBD:_:24": 1
+        },
+        "hillary:NNP:_:9": {
+            "clinton:NNP:_:8": 3
+        },    
+        "visited:VBD:_:10": {
+            "china:NNP:_:11": 1,
+            "chinese:JJ:_:33": 1
+        },
+        "china:NNP:_:11": {
+            "last:JJ:*:12": 2,
+            "on:IN:*:29": 1
+        },
+        "last:JJ:*:12": {
+            "monday:NNP:_:13": 1,
+            "month:NN:_:17": 1,
+            "week:NN:_:23": 2
+        },
+        "monday:NNP:_:13": {
+            "<END>": 2,
+            "last:JJ:*:12": 1
+        },
+        "wanted:VBD:_:14": {
+            "to:TO:*:15": 1
+        },
+        "to:TO:*:15": {
+            "visit:VB:_:16": 1
+        },
+        "visit:VB:_:16": {
+            "china:NNP:_:11": 1
+        },
+        "month:NN:_:17": {
+            "but:CC:*:18": 1
+        },
+        "but:CC:*:18": {
+            "postponed:VBD:_:19": 1
+        },
+        "postponed:VBD:_:19": {
+            "her:PRP$:*:20": 1
+        },
+        "her:PRP$:*:20": {
+            "plans:NNS:_:21": 1
+        },    
+        "plans:NNS:_:21": {
+            "till:IN:_:22": 1
+        },
+        "till:IN:_:22": {
+            "monday:NNP:_:13": 1
+        },
+        "week:NN:_:23": {
+            "<END>": 1,
+            "the:DT:*:0": 1
+        },
+        "paid:VBD:_:24": {
+            "a:DT:*:3": 1
+        },
+        "visit:NN:_:25": {
+            "to:IN:*:26": 1
+        },
+        "to:IN:*:26": {
+            "the:DT:*:0": 1
+        },
+        "people:NNP:_:27": {
+            "republic:NNP:_:28": 1
+        },
+        "republic:NNP:_:28": {
+            "of:IN:*:2": 1
+        },
+        "on:IN:*:29": {
+            "monday:NNP:_:13": 1
+        },
+        "secretary:NNP:_:30": {
+            "state:NNP:_:31": 1
+        },
+        "state:NNP:_:31": {
+            "ms.:NNP:_:32": 1
+        },
+        "ms.:NNP:_:32": {
+            "clinton:NNP:_:8": 1
+        },
+        "chinese:JJ:_:33": {
+            "officials:NNS:_:34": 1
+        },
+        "officials:NNS:_:34": {
+            "<END>": 1
+        }
+    }
+
 
 Weights
 ----
@@ -90,9 +215,9 @@ therefore it is sufficient to issue the following command on the terminal in the
 
 The example introduced above, for instance, produces the following output:
 
-![Output for the example cluster](/images/output.png)
+    hillary clinton visited china last week
 
-which includes the following summary: 
+which corresponds to the following summary: 
 
     Hillary Clinton visited China last week.
 
