@@ -1,6 +1,6 @@
 Multi-Sentence Compression
 ====
-_Multi-Sentence Compression, in Python!_
+_Multi-Sentence Compression, in Python 3!_
 
 Compressing a cluster of related sentences into a single sentence that retains the most relevant non-redundant concepts from the original cluster and is grammatically sound is a complex task.
 
