@@ -80,7 +80,7 @@ def advanced_weight(graph: Graph, lookup: Table) -> Graph:
     return result
 
 
-def search(graph: Graph, num_result: int = 5, min_len: int = 8) -> List[Tuple[List[str], float]]:
+def search(graph: Graph, num_results: int = 5, min_len: int = 8) -> List[Tuple[List[str], float]]:
     result, fringe = [], [([], 0)]
     while fringe:
         best = min(fringe, key=lambda x: x[1])
@@ -98,8 +98,10 @@ def search(graph: Graph, num_result: int = 5, min_len: int = 8) -> List[Tuple[Li
             if len(best[0]) < min_len or not any(':VB' in n for n in best[0]):
                 continue
 
-            result.append((best[0], best[1] / len(best[0])))
-            if len(result) >= num_result:
+            entry = (best[0], best[1] / len(best[0]))
+            if entry not in result:
+                result.append(entry)
+            if len(result) >= num_results:
                 return result
 
     return result
@@ -148,13 +150,14 @@ if __name__ == '__main__':
         with Timer('Weighting'):
             # graph = naive_weight(g)
             g = advanced_weight(g, t)
+            # print(json.dumps(g, indent=4), end='\n\n')
 
         with Timer('Compressing'):
-            summaries = search(g, min_len=6)
-
-        # print(json.dumps(g, indent=4), end='\n\n')
-        if summaries:
-            summary = min(summaries, key=lambda x: x[1])
-            print(' '.join(w.split(':')[0] for w in summary[0]), end='\n\n')
+            summaries = search(g, num_results=15, min_len=8)
+            if summaries:
+                summaries = sorted(summaries, key=lambda x: x[1])
+                for i, (summary, cost) in enumerate(summaries):
+                    print(f"{i + 1:3}. (cost: {cost:.3f}) {' '.join(w.split(':')[0] for w in summary)}")
+                print()
 
     print('Done.')
