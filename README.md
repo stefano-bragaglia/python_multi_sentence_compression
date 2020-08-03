@@ -37,8 +37,8 @@ Given the following cluster of related sentences:
 4. _Last week the Secretary State Ms. Clinton visited Chinese officials._
 
 the resulting `word graph` is presented below.
-
-   {
+    
+    {
         "<START>": {
             "the:DT:*:0": 1,
             "hillary:NNP:_:9": 2,
