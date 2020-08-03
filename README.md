@@ -213,7 +213,7 @@ therefore it is sufficient to issue the following command on the terminal in the
     
 Alternatively, just try:
 
-    python3 /src/main/script/main.py
+    python3 /src/main/python/main.py
 
 The example introduced above, for instance, produces the following output:
 
