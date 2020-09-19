@@ -1,11 +1,11 @@
 from unittest import TestCase
 
-import spacy
-
-from main import advanced_weight
-from main import naive_weight
-from main import search
-from main import word_graph
+from code import advanced_weight
+from code import encode
+from code import naive_weight
+from code import parse
+from code import report
+from code import traverse
 
 SENTENCES = """
 The wife of a former U.S. president Bill Clinton, Hillary Clinton, visited China last Monday.
@@ -14,30 +14,55 @@ Hillary Clinton paid a visit to the People Republic of China on Monday.
 Last week the Secretary State Ms. Clinton visited Chinese officials.
 """
 
-nlp = spacy.load("en_core_web_sm")
-
 
 # noinspection PyMethodMayBeStatic
 class MainTest(TestCase):
 
-    def test__word_graph(self):
-        word_graph(SENTENCES)
+    def test__parse(self):
+        c = parse(SENTENCES)
 
-        assert True
+        assert c
+
+    def test__encode(self):
+        c = parse(SENTENCES)
+        g, t = encode(c)
+
+        assert g
+        assert t
 
     def test__naive_weight(self):
-        g, t = word_graph(SENTENCES)
-        naive_weight(g)
+        c = parse(SENTENCES)
+        g, t = encode(c)
+        w_n = naive_weight(g)
 
-        assert True
+        assert w_n
 
     def test__advanced_weight(self):
-        g, t = word_graph(SENTENCES)
-        advanced_weight(g, t)
+        c = parse(SENTENCES)
+        g, t = encode(c)
+        w_a = advanced_weight(g, t)
 
-        assert True
+        assert w_a
 
     def test__search(self):
-        g, t = word_graph(SENTENCES)
-        g = naive_weight(g)
-        search(g, 5, 6)
+        c = parse(SENTENCES)
+        g, t = encode(c)
+        w_n = naive_weight(g)
+        w_a = advanced_weight(g, t)
+        s_n = traverse(w_n, 5, 6)
+        s_a = traverse(w_a, 5, 6)
+
+        assert s_n
+        assert s_a
+
+    def test__report(self):
+        c = parse(SENTENCES)
+        g, t = encode(c)
+        w_n = naive_weight(g)
+        w_a = advanced_weight(g, t)
+        s_n = traverse(w_n, 5, 6)
+        s_a = traverse(w_a, 5, 6)
+        report(s_n, 5)
+        report(s_a, 5)
+
+        assert True

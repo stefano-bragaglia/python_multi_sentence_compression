@@ -1,0 +1,45 @@
+#!/usr/bin/env python
+from code import advanced_weight
+from code import encode
+from code import naive_weight
+from code import parse
+from code import report
+from code import traverse
+from utils import Timer
+
+SENTENCES = """
+The wife of a former U.S. president Bill Clinton, Hillary Clinton, visited China last Monday.
+Hillary Clinton wanted to visit China last month but postponed her plans till Monday last week.
+Hillary Clinton paid a visit to the People Republic of China on Monday.
+Last week the Secretary State Ms. Clinton visited Chinese officials.
+"""
+
+if __name__ == '__main__':
+    with Timer('Experiment'):
+        with Timer(' Parsing'):
+            c = parse(SENTENCES)
+
+        with Timer('  Encoding'):
+            g, t = encode(c)
+
+        with Timer('  Weighting'):
+            with Timer('    Naive'):
+                w_n = naive_weight(g)
+            with Timer('    Advanced'):
+                w_a = advanced_weight(g, t)
+
+        with Timer('  Compressing'):
+            with Timer('    Naive'):
+                s_n = traverse(w_n, num_results=50, min_len=8)
+            with Timer('    Advanced'):
+                s_a = traverse(w_a, num_results=50, min_len=8)
+
+        with Timer('  Reporting'):
+            if s_n:
+                with Timer('    Naive'):
+                    report(s_n, num_results=5)
+            if s_a:
+                with Timer('    Advanced'):
+                    report(s_a, num_results=5)
+
+    print('Done.')
