@@ -95,7 +95,7 @@ def traverse(graph: Graph, num_results: int = 5, min_len: int = 8) -> List[Tuple
         fringe.remove(best)
         tail = best[0][-1] if best[0] else '<START>'
         if tail not in graph:
-            return result
+            continue
 
         for head, cost in graph[tail].items():
             if head in best[0]:
