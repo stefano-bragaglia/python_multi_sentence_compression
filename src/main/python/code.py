@@ -90,10 +90,13 @@ def advanced_weight(graph: Graph, lookup: Table) -> Graph:
 
 def traverse(graph: Graph, num_results: int = 5, min_len: int = 8) -> List[Tuple[List[str], float]]:
     result, fringe = [], [([], 0)]
-    while fringe:
+    while num_results > 0 and fringe:
         best = min(fringe, key=lambda x: x[1])
         fringe.remove(best)
         tail = best[0][-1] if best[0] else '<START>'
+        if tail not in graph:
+            return result
+
         for head, cost in graph[tail].items():
             if head in best[0]:
                 continue
